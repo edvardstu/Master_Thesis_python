@@ -23,6 +23,7 @@ def plotState(x, y, vx, vy, i, R):
     theta_circle = np.linspace(0, 2 * np.pi, 1500)
     plt.plot(R * np.cos(theta_circle), R * np.sin(theta_circle), color=(0, 0, 0, 0.5))
 
+    '''
     beta1 = np.arctan2(y[i], x[i])
     beta2 = np.arctan2(y[i-1], x[i-1])
     beta = (beta1 + beta2)/2
@@ -31,7 +32,7 @@ def plotState(x, y, vx, vy, i, R):
     print(Pi)
 
     print(np.mean(np.sqrt(vx[i]**2+vy[i]**2)))
-
+    '''
 
 def plotVelocityMap(x, y, vx, vy, i, R):
     plt.figure()
