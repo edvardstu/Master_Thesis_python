@@ -59,4 +59,5 @@ def plotRelativeErrorEM(fileNameBase, isAB):
 fileNameBase = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/benchmark/benchmark"
 plotRelativeErrorEM(fileNameBase, False)
 plotRelativeErrorEM(fileNameBase, True)
+plt.savefig("plots/benchmark/ABvsEM.png", dpi=200)
 plt.show()
