@@ -34,6 +34,30 @@ def plotState(x, y, vx, vy, i, R):
     print(np.mean(np.sqrt(vx[i]**2+vy[i]**2)))
     '''
 
+def plotStateSqaure(x, y, vx, vy, i, L, H):
+    plt.figure()
+    x_0 = x[i]
+    y_0 = y[i]
+    v_0 = 10
+    #c = np.arctan2(y[i + 1] - y[i], x[i + 1] - x[i])
+    c = np.arctan2(vy[i], vx[i])
+    # c= theta[i]
+    scat = plt.scatter(x_0, y_0, c=c, cmap='hsv')
+    plt.quiver(x_0, y_0, np.cos(c), np.sin(c))
+    plt.xlabel(r'$x$')
+    plt.ylabel(r'$y$')
+    cbar = plt.colorbar(scat)
+    cbar.ax.set_ylabel(r'$\theta$')
+    cbar.set_clim(-2*np.pi, 2*np.pi)
+
+
+    # Add confining sqaure
+
+    plt.plot([-L/2, L/2], [H/2, H/2], color=(0, 0, 0, 0.5))
+    plt.plot([-L/2, L/2], [-H/2, -H/2], color=(0, 0, 0, 0.5))
+    plt.plot([L/2, L/2], [-H/2, H/2], color=(0, 0, 0, 0.5))
+    plt.plot([-L/2, -L/2], [-H/2, H/2], color=(0, 0, 0, 0.5))
+
 def plotVelocityMap(x, y, vx, vy, i, R):
     plt.figure()
     x = x[i]
@@ -153,7 +177,78 @@ def run_animation(x, y, theta, R, n_steps, n_particles, n_frames):
     plt.show()
 
 
-def update_plot(i, data, scat, arrow):
+def run_animation_tube(x, y, theta, vx, vy, L, H, n_steps, n_particles, n_frames):
+    r_c = 1 / 2
+
+    xy = np.zeros([n_frames, n_particles, 2])
+    theta_animation = np.zeros([n_frames, n_particles])
+    vxy = np.zeros([n_frames, n_particles, 2])
+    for i in range(0, n_frames):
+        offset = int(n_steps / n_frames)
+        xy[i] = np.stack((x[i * offset].T, y[i * offset].T)).T
+        theta_animation[i] = theta[i * offset]
+        vxy[i] = np.stack((vx[i * offset].T, vy[i * offset].T)).T
+
+    numframes = n_frames
+    numpoints = n_particles
+
+    x_0 = x[0]
+    y_0 = y[0]
+    c = np.arctan2(y[1] - y[0], x[1] - x[0])
+
+    fig = plt.figure(facecolor='white', figsize=(12, 5))
+    ax = fig.add_subplot(111, aspect='equal')
+    plt.tight_layout(pad=3)
+
+    # plt.xlim(-R - R/10, R + R/10)
+    # plt.ylim(-R - R/10, R + R/10)
+    # Set limits
+    ax.axis([-L/2 - L / 20, L/2 + L / 20, -H/2 - H / 20, H/2 + H / 20])
+    # ax.axis([-R *10, R *10, -R *10, R*10])
+    # ax.axis([-2, 18, 0, 45])
+
+    plt.xlabel(r'$x$')
+    plt.ylabel(r'$y$')
+
+    # Add confining circle
+    x_line = np.linspace(-L/2, L/2, 100)
+    y_line = np.full(100, H/2)
+    plt.plot(x_line, y_line, color=(0, 0, 0, 0.5))
+    plt.plot(x_line, -y_line, color=(0, 0, 0, 0.5))
+
+    # scat = ax.scatter(x, y, s=0, alpha=0.5, clip_on=False)
+    scat = ax.scatter(x_0, y_0, c=c, cmap='hsv')
+
+    rpix = 6  # 12#25
+    # Calculate and update size in points:
+    size_pt = (2 * rpix / fig.dpi * 72) ** 2
+    sizes_pt = np.full(n_particles, size_pt)
+    scat.set_sizes(sizes_pt)
+
+    arrow = plt.quiver(x_0, y_0, np.cos(c), np.sin(c))
+
+    cbar = fig.colorbar(scat, ax=ax)
+    cbar.ax.set_ylabel(r'$\theta$')
+    # cbar.set_clim(-2*np.pi, 2*np.pi)
+    ani = animation.FuncAnimation(fig, update_plot, frames=numframes,
+                                  fargs=(xy, vxy, scat, arrow))
+    #ani.save('testAB.gif', writer='imagemagick', fps=5)
+    plt.show()
+
+
+def update_plot(i, data, vxy, scat, arrow):
+    #cm = np.arctan2(data[i, :, 1] - data[i - 1, :, 1], data[i, :, 0] - data[i - 1, :, 0])
+    cm = np.arctan2(vxy[i, :, 1], vxy[i, :, 0])
+    scat.set_offsets(data[i])
+    scat.set_array(cm)
+    U = np.cos(cm)
+    V = np.sin(cm)
+    arrow.set_UVC(U, V)
+    arrow.set_offsets(data[i])
+
+    return scat
+
+def update_plot_old(i, data, scat, arrow):
     cm = np.arctan2(data[i, :, 1] - data[i - 1, :, 1], data[i, :, 0] - data[i - 1, :, 0])
     scat.set_offsets(data[i])
     scat.set_array(cm)
