@@ -203,7 +203,8 @@ def run_animation_tube(x, y, theta, vx, vy, L, H, n_steps, n_particles, n_frames
     # plt.xlim(-R - R/10, R + R/10)
     # plt.ylim(-R - R/10, R + R/10)
     # Set limits
-    ax.axis([-L/2 - L / 20, L/2 + L / 20, -H/2 - H / 20, H/2 + H / 20])
+    #ax.axis([-L/2 - L / 20, L/2 + L / 20, -H/2 - H / 20, H/2 + H / 20])
+    ax.axis([-10000, 10000, -10000, 10000])
     # ax.axis([-R *10, R *10, -R *10, R*10])
     # ax.axis([-2, 18, 0, 45])
 
