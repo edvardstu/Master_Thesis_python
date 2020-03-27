@@ -1,62 +1,73 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
+import enum
 
-def plotState(x, y, vx, vy, i, R):
+class Barrier(enum.Enum):
+    Circular = 1
+    Periodic = 2
+    PeriodicTube = 3
+    PeriodicFunnel = 4
+
+def plotBoundary(barrier, L, H, h, R):
+    boundary = np.array([None, None])
+    boundary_periodic = np.array([None, None])
+    if barrier == Barrier.Circular:
+        n_points = 100
+        d_theta = 2 * np.pi / 100
+        theta1 = np.linspace(0, 2 * np.pi - d_theta, n_points)
+        theta2 = np.linspace(d_theta, 2 * np.pi, n_points)
+        boundary = np.array([R * np.cos(theta1), R * np.cos(theta2), R * np.sin(theta1), R * np.sin(theta2)])
+    elif barrier == Barrier.Periodic:
+        boundary_periodic = np.array([[-L / 2, -L / 2, L / 2, -L / 2],
+                                      [L / 2, L / 2, L / 2, -L / 2],
+                                      [H / 2, -H / 2, -H / 2, -H / 2],
+                                      [H / 2, -H / 2, H / 2, H / 2]])
+    elif barrier == Barrier.PeriodicTube:
+        boundary = np.array([[-L / 2, -L / 2],
+                             [L / 2, L / 2],
+                             [H / 2, -H / 2],
+                             [H / 2, -H / 2]])
+        boundary_periodic = np.array([[L / 2, -L / 2],
+                                      [L / 2, -L / 2],
+                                      [H / 2, H / 2],
+                                      [-H / 2, -H / 2]])
+
+    if (boundary.any() != None):
+        n_boundary = len(boundary[0])
+        for i in range(0, n_boundary):
+            plt.plot([boundary[0, i], boundary[1, i]], [boundary[2, i], boundary[3, i]], color='black')
+
+    if (boundary_periodic.any() != None):
+        n_boundary_periodic = len(boundary_periodic[0])
+        for i in range(0, n_boundary_periodic):
+            plt.plot([boundary_periodic[0, i], boundary_periodic[1, i]],
+                     [boundary_periodic[2, i], boundary_periodic[3, i]], color='black', linestyle='dashed')
+
+def plotLimits(barrier, L, H, R):
+    plt.axis('scaled')
+    if barrier == Barrier.Circular:
+        plt.xlim(-R - R/10, R + R/10)
+        plt.ylim(-R - R/10, R + R/10)
+    else:
+        plt.xlim(-L/2 - L / 20, L/2 + L / 20)
+        plt.ylim(-H/2 - H / 20, H/2 + H / 20)
+
+def plotState(x, y, vx, vy, i):
     plt.figure()
     x_0 = x[i]
     y_0 = y[i]
-    v_0 = 10
-    #c = np.arctan2(y[i + 1] - y[i], x[i + 1] - x[i])
     c = np.arctan2(vy[i], vx[i])
-    # c= theta[i]
     scat = plt.scatter(x_0, y_0, c=c, cmap='hsv')
     plt.quiver(x_0, y_0, np.cos(c), np.sin(c))
+
     plt.xlabel(r'$x$')
     plt.ylabel(r'$y$')
+
     cbar = plt.colorbar(scat)
     cbar.ax.set_ylabel(r'$\theta$')
     cbar.set_clim(-2*np.pi, 2*np.pi)
 
-
-    # Add confining circle
-    theta_circle = np.linspace(0, 2 * np.pi, 1500)
-    plt.plot(R * np.cos(theta_circle), R * np.sin(theta_circle), color=(0, 0, 0, 0.5))
-
-    '''
-    beta1 = np.arctan2(y[i], x[i])
-    beta2 = np.arctan2(y[i-1], x[i-1])
-    beta = (beta1 + beta2)/2
-    p_phi = vx[i]/v_0*np.sin(-beta) + vy[i]/v_0*np.cos(-beta)
-    Pi = np.mean(p_phi)
-    print(Pi)
-
-    print(np.mean(np.sqrt(vx[i]**2+vy[i]**2)))
-    '''
-
-def plotStateSqaure(x, y, vx, vy, i, L, H):
-    plt.figure()
-    x_0 = x[i]
-    y_0 = y[i]
-    v_0 = 10
-    #c = np.arctan2(y[i + 1] - y[i], x[i + 1] - x[i])
-    c = np.arctan2(vy[i], vx[i])
-    # c= theta[i]
-    scat = plt.scatter(x_0, y_0, c=c, cmap='hsv')
-    plt.quiver(x_0, y_0, np.cos(c), np.sin(c))
-    plt.xlabel(r'$x$')
-    plt.ylabel(r'$y$')
-    cbar = plt.colorbar(scat)
-    cbar.ax.set_ylabel(r'$\theta$')
-    cbar.set_clim(-2*np.pi, 2*np.pi)
-
-
-    # Add confining sqaure
-
-    plt.plot([-L/2, L/2], [H/2, H/2], color=(0, 0, 0, 0.5))
-    plt.plot([-L/2, L/2], [-H/2, -H/2], color=(0, 0, 0, 0.5))
-    plt.plot([L/2, L/2], [-H/2, H/2], color=(0, 0, 0, 0.5))
-    plt.plot([-L/2, -L/2], [-H/2, H/2], color=(0, 0, 0, 0.5))
 
 def plotVelocityMap(x, y, vx, vy, i, R):
     plt.figure()
@@ -123,7 +134,7 @@ def plotParticleTrace(x, y, numParticles, R):
     plt.savefig("particleTraceDisordered.png", dpi=200)
 
 
-def run_animation(x, y, theta, R, n_steps, n_particles, n_frames):
+def run_animation_old(x, y, theta, R, n_steps, n_particles, n_frames):
     r_c = 1 / 2
 
     xy = np.zeros([n_frames, n_particles, 2])
@@ -177,7 +188,7 @@ def run_animation(x, y, theta, R, n_steps, n_particles, n_frames):
     plt.show()
 
 
-def run_animation_tube(x, y, theta, vx, vy, L, H, n_steps, n_particles, n_frames):
+def run_animation(x, y, theta, vx, vy, L, H, h, R, n_steps, n_particles, n_frames, barrier):
     r_c = 1 / 2
 
     xy = np.zeros([n_frames, n_particles, 2])
@@ -196,26 +207,15 @@ def run_animation_tube(x, y, theta, vx, vy, L, H, n_steps, n_particles, n_frames
     y_0 = y[0]
     c = np.arctan2(y[1] - y[0], x[1] - x[0])
 
-    fig = plt.figure(facecolor='white', figsize=(12, 5))
+    fig = plt.figure(facecolor='white', figsize=(7, 5))
     ax = fig.add_subplot(111, aspect='equal')
     plt.tight_layout(pad=3)
-
-    # plt.xlim(-R - R/10, R + R/10)
-    # plt.ylim(-R - R/10, R + R/10)
-    # Set limits
-    #ax.axis([-L/2 - L / 20, L/2 + L / 20, -H/2 - H / 20, H/2 + H / 20])
-    ax.axis([-10000, 10000, -10000, 10000])
-    # ax.axis([-R *10, R *10, -R *10, R*10])
-    # ax.axis([-2, 18, 0, 45])
 
     plt.xlabel(r'$x$')
     plt.ylabel(r'$y$')
 
-    # Add confining circle
-    x_line = np.linspace(-L/2, L/2, 100)
-    y_line = np.full(100, H/2)
-    plt.plot(x_line, y_line, color=(0, 0, 0, 0.5))
-    plt.plot(x_line, -y_line, color=(0, 0, 0, 0.5))
+    plotBoundary(barrier, L, H, h, R)
+    plotLimits(barrier, L, H, R)
 
     # scat = ax.scatter(x, y, s=0, alpha=0.5, clip_on=False)
     scat = ax.scatter(x_0, y_0, c=c, cmap='hsv')
@@ -242,9 +242,10 @@ def update_plot(i, data, vxy, scat, arrow):
     cm = np.arctan2(vxy[i, :, 1], vxy[i, :, 0])
     scat.set_offsets(data[i])
     scat.set_array(cm)
-    U = np.cos(cm)
-    V = np.sin(cm)
-    arrow.set_UVC(U, V)
+    #U = np.cos(cm)
+    #V = np.sin(cm)
+    #arrow.set_UVC(U, V)
+    arrow.set_UVC(vxy[i, :, 0]*2, vxy[i, :, 1]*2)
     arrow.set_offsets(data[i])
 
     return scat
