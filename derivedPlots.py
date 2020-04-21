@@ -1,5 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.optimize import curve_fit
 import fileReader
 import cmath
 
@@ -160,6 +161,7 @@ def plotTimeAvgV(folderName, n_simulations):
 
 
 def plotOrderParameterSqaure(folderName, n_simulations):
+    plt.figure()
     start = int(20000 / 200)
     n = np.linspace(100, 100 * n_simulations, n_simulations)
     Pi_rt = np.zeros(n_simulations)
@@ -192,6 +194,8 @@ def plotOrderParameterSqaure(folderName, n_simulations):
     #plt.savefig("orderParameterPosAvg2.png", dpi=200)
     #plt.show()
 
+def strechedExponential(x, tau_k, beta_k, c):
+    return np.exp(-(x/tau_k)**beta_k-c)
 
 def calcFPSF(fileName):
     time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
@@ -221,41 +225,57 @@ def calcFPSF(fileName):
 
     dr = np.zeros([max_steps_tau, n_particles])
     Q_t = np.zeros([max_steps_tau, n_steps])
-    #deltas = [0.5, 1, 2, 3, 4, 5, 6, 8, 10]
-    deltas = [1., 3., 5., 7., 9., 11.]
-    factor = 0.05
-    deltas = np.arange(1*factor, 13*factor, 2*factor)
+    deltas = [0.5, 1, 2, 3, 4, 5, 6, 8, 10]
+    #deltas = [0.5, 1, 2]
+    #factor = 0.02
+    #deltas = np.arange(1*factor, 15*factor, 2*factor)
     for delta in deltas:
         for k in range(1, max_steps_tau+1):
             dx = x[k:n_steps+k, :] - x[0:n_steps, :]
             dy = y[k:n_steps+k, :] - y[0:n_steps, :]
             dr = np.sqrt(dx**2+dy**2)
-            #Q_t[k-1, :] = np.mean(np.where(dr<delta,1,0), axis=1)
-            #test1 = np.mean(np.where(dr<delta,1,0), axis=1)
-            #test2 = np.mean(np.abs(np.real(np.exp(-1j*delta*dr))),axis=1)
-            #plt.plot(test1)
-            #plt.plot(test2)
-            #plt.show()
-            Q_t[k-1, :] = np.mean(np.real(np.exp(-1j*delta*dr)),axis=1)
+            Q_t[k-1, :] = np.mean(np.where(dr<delta,1,0), axis=1)
+            #Q_t[k-1, :] = np.real(np.mean(np.exp(-1j*delta*dr),axis=1))
+            #Q_t[k-1, :] = np.mean(np.real(np.exp(-1j * delta * dr)), axis=1)
 
         Q_t_time_avg = np.mean(Q_t, axis=1)
         Q_t_squared_time_avg = np.mean(Q_t**2, axis=1)
 
         tau = np.linspace(1, max_steps_tau + 1, max_steps_tau)
+        #Should be a distribution with stepsize dt equalt to the time difference between two x values in file.
+        #Should perhaps be logarithmic?
+
+        c_guess = -np.log(Q_t_time_avg[0])
+        beta_guess = 1
+        tau_guess = tau[49]/(-np.log(Q_t_time_avg[49])-c_guess)
+        #popt, pcov = curve_fit(strechedExponential, tau, Q_t_time_avg, p0=(tau_guess,beta_guess,c_guess))
+        #print(popt)
+        #tau_k, beta_k, c = popt
         chi_4 = n_particles*(Q_t_squared_time_avg-Q_t_time_avg**2)
 
         plt.figure(0)
+        #plt.plot(tau, Q_t_time_avg, label=r"$\delta =$ {}".format(delta))
         plt.semilogx(tau, Q_t_time_avg, label=r"$\delta =$ {}".format(delta))
         plt.figure(1)
         plt.semilogx(tau, chi_4, label=r"$\delta =$ {}".format(delta))
         plt.figure(2)
         plt.loglog(tau, chi_4, label=r"$\delta =$ {}".format(delta))
+        #plt.figure(3)
+        #plt.semilogx(tau, strechedExponential(tau, tau_guess, beta_guess, c_guess))
+
+
 
     plt.figure(0)
+    plt.xlabel(r"Time $\tau$")
+    plt.ylabel(r"$Q_t$")
     plt.legend()
     plt.figure(1)
+    plt.xlabel(r"Time $\tau$")
+    plt.ylabel(r"$\chi_4$")
     plt.legend()
     plt.figure(2)
+    plt.xlabel(r"Time $\tau$")
+    plt.ylabel(r"$\chi_4$")
     plt.legend()
     plt.show()
     '''

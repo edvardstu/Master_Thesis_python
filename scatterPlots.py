@@ -32,6 +32,15 @@ def plotBoundary(barrier, L, H, h, R):
                                       [L / 2, -L / 2],
                                       [H / 2, H / 2],
                                       [-H / 2, -H / 2]])
+    elif barrier == Barrier.PeriodicFunnel:
+        boundary = np.array([[-L / 2, 0, -L / 2, 0],
+                             [0, L / 2, 0, L / 2],
+                             [H / 2, h / 2, -H / 2, -h / 2],
+                             [h / 2, H / 2, -h / 2, -H / 2]])
+        boundary_periodic = np.array([[L / 2, -L / 2],
+                                      [L / 2, -L / 2],
+                                      [H / 2, H / 2],
+                                      [-H / 2, -H / 2]])
 
     if (boundary.any() != None):
         n_boundary = len(boundary[0])
