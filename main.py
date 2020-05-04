@@ -7,23 +7,32 @@ import derivedPlots
 
 
 def main():
-    barrier = scatterPlots.Barrier.PeriodicFunnel
-    L=31.0
-    H=31.0
+
+    barrier = scatterPlots.Barrier.Periodic
+    L=25.0
+    H=25.0
     h=9.3
     R=30
 
 
-    fileName = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_funnel/funnelHigthSweep7.txt"
-    #fileName = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_tube/Dr0_2DensitySweep5.txt"
-    time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
-    n_frames = 200
-    checkPosition(x, y, R, L, H, h, barrier)
+    #fileNameBase = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_0_0/testHDF5"
+    fileNameBase = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_0_1/sweepPropulsion"
+    derivedPlots.calcFPSFandKurtisis(fileNameBase)
+    derivedPlots.plotFPSFandKurtisis(fileNameBase)
+    #derivedPlots.plotOrderParameterParallell(fileNameBase, 7)
+
+
+
+    #fileName = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_1_0/test3"
+    #time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
+    #time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps = fileReader.loadFileHDF5(fileName)
+    #n_frames = 200
+    #checkPosition(x, y, R, L, H, h, barrier)
 
     #derivedPlots.plotAvgV(time, vx, vy)
     #plt.show()
 
-    scatterPlots.run_animation(x, y, theta, vx, vy, L ,H ,h, R, n_steps, n_particles, n_frames, barrier)
+    #scatterPlots.run_animation(x, y, theta, vx, vy, L ,H ,h, R, n_written_steps, n_particles, n_frames, barrier)
 
     #scatterPlots.plotState(x, y, vx, vy, 0)
     #plt.show()
@@ -31,9 +40,8 @@ def main():
     #scatterPlots.plotLimits(barrier, L, H, R)
 
 
-
-    #time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
     #derivedPlots.plotAvgV(time, vx, vy)
+    #derivedPlots.plotAvgEnergy(time, vx, vy, 0.2)
     #plt.show()
 
     #fileNameBase = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_tube/"
@@ -51,6 +59,9 @@ def main():
     #time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
     #n_frames = 200
     #scatterPlots.run_animation(x, y, theta, vx, vy, L ,H ,h, R, n_steps, n_particles, n_frames, barrier)
+
+
+
 
 def checkPosition(x, y, R, L, H, h, barrier):
     factor = 1.1
@@ -75,10 +86,4 @@ def checkPosition(x, y, R, L, H, h, barrier):
 main()
 
 
-def calcFPSF():
-    fileName = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/fpsf0Susc.txt"
-    time, Q_t = np.loadtxt(fileName, unpack=True)
-    print(Q_t.var())
-
-#calcFPSF()
 

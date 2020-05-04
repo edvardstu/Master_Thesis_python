@@ -20,7 +20,7 @@ def plotForces():
     r_max = 2.0
     r = np.linspace(0.01, r_max, 1000)
 
-    r_c=1.1
+    r_c=1.05
     plt.plot(r, forceHarmonic(r, r_c, r_a, v_0), label= 'Harmonic')
 
     plt.plot(r, forceLennardJonesRep(r), label='LennardJonesRep')

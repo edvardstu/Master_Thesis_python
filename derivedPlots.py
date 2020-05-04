@@ -1,89 +1,19 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.optimize import curve_fit
+from matplotlib import cm
 import fileReader
-import cmath
-
-def plotOrderParameter(time, x, y, theta, vx, vy, D_r):
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-
-    #v_0=10
-    #beta = np.arctan2(y, x)
-    #p_phi = vx/v_0*np.sin(-beta) + vy/v_0*np.cos(-beta)
-    #Pi = np.mean(p_phi, axis=1)
+import math
+from datetime import datetime
 
 
-    v = np.mean(np.sqrt(vx**2 + vy**2), axis=1)
-    beta = np.arctan2(y, x)
-    p_phi = vx * np.sin(-beta) + vy * np.cos(-beta)
-    Pi = np.mean(p_phi, axis=1)/v
+def colourSet(n, cmap='gist_rainbow'):
+    colourSet = []
+    cmap_large = cm.get_cmap(cmap)
+    palette = np.linspace(0.05, 0.95, n)
+    for colourID in range(n):
+        colourSet.append(cmap_large(palette[colourID]))
+    return colourSet
 
-
-    ax1.plot(time, Pi, color='b')
-    ax1.set_xlabel(r'$t$')
-    ax1.set_ylabel(r'$\Pi_\phi$', color='b')
-    ax1.tick_params(axis='y', labelcolor='b')
-
-    ax2.plot(time, D_r, color='r')
-    ax2.set_ylabel(r'Diffusion constant $D_r$', color='r')
-    ax2.tick_params(axis='y', labelcolor='r')
-
-    fig.tight_layout()
-    plt.savefig("orderParameterPosAvg.png", dpi=200)
-    #plt.show()
-
-def plotOrderParameter2(time, x, y, theta, vx, vy, D_r):
-    plt.figure()
-    #v_0=1
-    v = np.mean(np.sqrt(vx**2 + vy**2), axis=1)
-
-    beta = np.arctan2(y, x)
-    #p_phi = np.sin(theta - beta)
-    #p_phi = vx/v_0*np.sin(-beta) + vy/v_0*np.cos(-beta)
-    p_phi = vx * np.sin(-beta) + vy * np.cos(-beta)
-    Pi = np.mean(p_phi, axis=1)/v
-
-    plt.plot(time, Pi)
-    plt.xlabel(r'$t$')
-    plt.ylabel(r'$\Pi_\phi$')
-
-    plt.savefig("orderParameterPosAvg2.png", dpi=200)
-    #plt.show()
-
-
-def plotSevralOrderParameterStates(fileNameBase):
-    plt.figure()
-
-    n_timeframes = 1
-    for i in range (0,4):
-        time, x, y, theta, vx, vy, n_particles, n_steps, D_r = loadSeveralFiles(fileNameBase, n_timeframes, i)
-        v = np.mean(np.sqrt(vx**2 + vy**2), axis=1)
-        beta = np.arctan2(y, x)
-        p_phi = vx * np.sin(-beta) + vy * np.cos(-beta)
-        Pi = np.mean(p_phi, axis=1)/v
-
-        label = "Not defined"
-
-        if i == 0:
-            label = r"$D_r = 0.0$"
-        elif i == 1:
-            label = r"$D_r = 0.2$"
-        elif i == 2:
-            label = r"$D_r = 0.8$"
-        elif i == 3:
-            label = r"$D_r = 5.0$"
-
-        plt.plot(time, np.abs(Pi), label=label)
-
-
-
-    plt.xlabel(r'$t$')
-    plt.ylabel(r'$|\Pi_\phi|$')
-    plt.legend()
-
-    plt.savefig("orderParameterPosAvgSeveral.png", dpi=200)
-    plt.show()
 
 def plotAvgV(time, vx, vy):
     v = np.sqrt(vx**2 + vy**2)
@@ -95,173 +25,104 @@ def plotAvgV(time, vx, vy):
     plt.xlabel(r'Time $t$')
     plt.ylabel(r'$\langle v \rangle_{r}$')
 
-
-
-def plotTimeAvgOrderParameter(time, x, y, theta, vx, vy, D_r, n_steps, n_timeframes):
-    v_0 = 10
-    beta = np.arctan2(y, x)
-    v = np.mean(np.sqrt(vx**2 + vy**2), axis=1)
-
-    #Pi_r = np.mean(vx/v_0*np.sin(-beta) + vy/v_0*np.cos(-beta), axis=1)
-    Pi_r = np.mean(vx*np.sin(-beta) + vy*np.cos(-beta), axis=1)/v
-
-
-
-    Pi_rt = np.zeros(n_timeframes)
-    #Pi_rt_old = np.zeros(n_timeframes)
-    Pi_rt_abs = np.zeros(n_timeframes)
-    D_r_rt = np.zeros(n_timeframes)
-    Pi_rt_std = np.zeros(n_timeframes)
-
-    start = int(50000/500)
-
-    for i in range(0, n_timeframes):
-        Pi_rt[i] = np.mean(Pi_r[(start+n_steps*i):(n_steps*(i+1)-1)])
-        Pi_rt_std[i] = np.std(Pi_r[(start+n_steps*i):(n_steps*(i+1)-1)], ddof=1)
-        #Pi_rt_old[i] = np.mean(Pi_r_old[(start + n_steps * i):(n_steps * (i + 1) - 1)])
-        Pi_rt_abs[i] = np.mean(np.abs(Pi_r[(start + n_steps * i):(n_steps * (i + 1) - 1)]))
-        D_r_rt[i] = D_r[start+n_steps*i]
-
-    plt.figure()
-    #plt.plot(D_r_rt, Pi_rt)
-    plt.errorbar(D_r_rt, Pi_rt, yerr=Pi_rt_std, capsize=5)
-    plt.xlabel(r'$D_r$')
-    plt.ylabel(r'$\langle \Pi_\phi \rangle_{t}$')
-    plt.savefig("orderParameterTimeAvg.png", dpi=200)
-
-    plt.figure()
-    plt.errorbar(D_r_rt, Pi_rt_abs, yerr=Pi_rt_std, capsize=5)
-    plt.xlabel(r'$D_r$')
-    plt.ylabel(r'$\langle|\Pi_\phi|\rangle_{t}$')
-    plt.savefig("orderParameterAbsTimeAvg.png", dpi=200)
-
-
-def plotTimeAvgV(folderName, n_simulations):
-    plt.figure()
-    n = np.linspace(100, 100 * n_simulations, n_simulations)
-    v_avg = np.zeros(n_simulations)
-
-    D_r_values = ['0_0', '0_2', '0_5', '0_8', '1_0']
-    for D_r_s in D_r_values:
-        for i in range(0, n_simulations):
-            #fileName = folderName + 'Dr' + D_r + 'DensitySweep' + str(i) + '.txt'
-            fileName = '{}Dr{}DensitySweep{}.txt'.format(folderName, D_r_s, str(i))
-            print(fileName)
-            time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
-            start = int(20000/200)
-            v = np.sqrt(vx ** 2 + vy ** 2)
-            v = np.mean(v, axis=1)
-            v_avg[i] = np.mean(v[start:n_steps])
-
-
-        plt.plot(n, v_avg, label=r"$D_r$ = {}".format(D_r_s))
-    plt.xlabel(r'Number of particles $N$')
-    plt.ylabel(r'$\langle v \rangle_{t, r}/v_0$')
-    plt.legend()
-
-
-def plotOrderParameterSqaure(folderName, n_simulations):
-    plt.figure()
+def plotAvgEnergy(time, vx, vy, v_0):
+    E_0 = v_0**2
     start = int(20000 / 200)
-    n = np.linspace(100, 100 * n_simulations, n_simulations)
-    Pi_rt = np.zeros(n_simulations)
-
-    D_r_values = ['0_0', '0_2', '0_5', '0_8', '1_0']
-    for D_r_s in D_r_values:
-        for i in range(n_simulations):
-            fileName = '{}Dr{}DensitySweep{}.txt'.format(folderName, D_r_s, str(i))
-            print(fileName)
-            time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
-
-            v = np.mean(np.sqrt(vx**2 + vy**2), axis=1)
-
-            Pi_x = vx/v[:, None]
-            Pi_y = vy/v[:, None]
-            #Pi_x = np.mean(vx, axis=1)/v
-            #Pi_y = np.mean(vy, axis=1)/v
-
-            e_r_x = np.mean(Pi_x, axis=1)
-            e_r_y = np.mean(Pi_y, axis=1)
-
-            Pi_r = np.mean(Pi_x*e_r_x[:, None] + Pi_y*e_r_y[:, None], axis=1)
-
-            Pi_rt[i] = np.mean(Pi_r[start:n_steps])
-
-        plt.plot(n, Pi_rt, label=r"$D_r$ = {}".format(D_r_s))
-    plt.legend()
-    plt.xlabel(r'Number of particles $N$')
-    plt.ylabel(r'$\Pi_r$')
-    #plt.savefig("orderParameterPosAvg2.png", dpi=200)
-    #plt.show()
-
-def strechedExponential(x, tau_k, beta_k, c):
-    return np.exp(-(x/tau_k)**beta_k-c)
-
-def calcFPSF(fileName):
-    time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
-    start = int(20000 / 200)
-
-    time = time[start:n_steps]-time[start]
-    x = x[start:n_steps, :]
-    y = y[start:n_steps, :]
-    #dx = x - x[0, :]
-    #dy = y - y[0, :]
-    #dr = np.sqrt(dx**2 + dy**2)
+    n_steps = len(time)
+    vx = vx[start:n_steps, :]
+    vy = vy[start:n_steps, :]
+    E = np.mean(vx**2+vy**2, axis=1)
+    plt.figure()
+    plt.plot(time[start:n_steps], E/E_0)
+    #plt.ylim(0, 6)
+    #plt.semilogy(time, v)
+    plt.xlabel(r'Time $t$')
+    #plt.ylabel(r'$\langle E \rangle_{r}\cdot(2/m)$')
+    plt.ylabel(r'$\langle E \rangle_{r}/E_{0}$')
+    #E_0 free particle energy = 1/2 m v_0**2
 
 
-    #Q_t = np.mean(np.where(dr<delta, 1, 0), axis=1)
+def calcFPSFandKurtisis(fileNameBase):
+    start_t = datetime.now()
+    start = int(20000 / 20)
+    max_steps_tau = 300
+    steps_lin = np.floor(max_steps_tau/2)
+    steps_log = np.ceil(max_steps_tau/2)
+    tau_temp_1 = np.linspace(1, steps_lin, steps_lin, dtype=int)
+    tau_temp_2 = np.geomspace(steps_lin+1, 15000, steps_log, dtype=int)
+    tau_integers = np.concatenate((tau_temp_1, tau_temp_2))
+    #U_0_array = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 1.0, 2.0]
 
-    #plt.plot(time, Q_t)
-    #plt.show()
+    delta = 0.3 #0.7
 
-    max_steps_tau = 100
-    n_steps = n_steps - start - max_steps_tau
+    n_files = 8
+    start_file = 0
+    h_p_array = np.zeros(n_files)
+    u_0_array = np.zeros(n_files)
+    for i in range(0, n_files):
+        fileName = fileNameBase + str(i+start_file)# + ".h5"
+        #time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
+        time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps = fileReader.loadFileHDF5(fileName)
+        time = time[start:n_written_steps]-time[start]
+        x = x[start:n_written_steps, :]
+        y = y[start:n_written_steps, :]
+        v_squared = vx[start:n_written_steps, :]**2 + vy[start:n_written_steps, :]**2
 
-    '''dr = np.zeros([max_steps_tau, n_particles])
-    for k in range(1, max_steps_tau+1):
-        dx = x[k:n_steps, :] - x[0:n_steps-k, :]
-        dy = y[k:n_steps, :] - y[0:n_steps - k, :]
-        dr[k-1] = np.mean(np.sqrt(dx**2+dy**2), axis=0)'''
+        #Q_t = np.zeros([max_steps_tau, n_steps])
+        Q_t_time_avg = np.zeros(max_steps_tau)
+        Q_t_squared_time_avg = np.zeros(max_steps_tau)
+        dE_squared_avg = np.zeros(max_steps_tau)
+        dE_quad_avg = np.zeros(max_steps_tau)
 
-    dr = np.zeros([max_steps_tau, n_particles])
-    Q_t = np.zeros([max_steps_tau, n_steps])
-    deltas = [0.5, 1, 2, 3, 4, 5, 6, 8, 10]
-    #deltas = [0.5, 1, 2]
-    #factor = 0.02
-    #deltas = np.arange(1*factor, 15*factor, 2*factor)
-    for delta in deltas:
-        for k in range(1, max_steps_tau+1):
-            dx = x[k:n_steps+k, :] - x[0:n_steps, :]
-            dy = y[k:n_steps+k, :] - y[0:n_steps, :]
+        for j in range(0, max_steps_tau):
+            #Calc overlap function
+            k = tau_integers[j]
+            k_max = n_written_steps - start - k
+            dx = x[k:k_max+k, :] - x[0:k_max, :]
+            dy = y[k:k_max+k, :] - y[0:k_max, :]
             dr = np.sqrt(dx**2+dy**2)
-            Q_t[k-1, :] = np.mean(np.where(dr<delta,1,0), axis=1)
+            Q_t = np.mean(np.where(dr<delta,1,0), axis=1)
+            Q_t_time_avg[j] = np.mean(Q_t)
+            Q_t_squared_time_avg[j] = np.mean(Q_t ** 2)
+            #Q_t[j, :] = np.mean(np.where(dr<delta,1,0), axis=1)
             #Q_t[k-1, :] = np.real(np.mean(np.exp(-1j*delta*dr),axis=1))
             #Q_t[k-1, :] = np.mean(np.real(np.exp(-1j * delta * dr)), axis=1)
 
-        Q_t_time_avg = np.mean(Q_t, axis=1)
-        Q_t_squared_time_avg = np.mean(Q_t**2, axis=1)
+            #NOTE, 1/2 m has been omitted as it will anyway disappear im the eq. for kurtosis.
+            dE_squared = (np.mean(v_squared[k:k_max+k, :] - v_squared[0:k_max, :], axis=1))**2
+            dE_squared_avg[j] = np.mean(dE_squared)
+            dE_quad_avg[j] = np.mean(dE_squared**2)
 
-        tau = np.linspace(1, max_steps_tau + 1, max_steps_tau)
-        #Should be a distribution with stepsize dt equalt to the time difference between two x values in file.
-        #Should perhaps be logarithmic?
+        #Q_t_time_avg = np.mean(Q_t, axis=1)
+        #Q_t_squared_time_avg = np.mean(Q_t**2, axis=1)
 
-        c_guess = -np.log(Q_t_time_avg[0])
-        beta_guess = 1
-        tau_guess = tau[49]/(-np.log(Q_t_time_avg[49])-c_guess)
-        #popt, pcov = curve_fit(strechedExponential, tau, Q_t_time_avg, p0=(tau_guess,beta_guess,c_guess))
-        #print(popt)
-        #tau_k, beta_k, c = popt
+        dt = time[1] - time[0]
+        tau = tau_integers*dt
         chi_4 = n_particles*(Q_t_squared_time_avg-Q_t_time_avg**2)
+        kurtosis = dE_quad_avg/dE_squared_avg**2
+
+        fileNameOut = fileName + "FpsfAndKurtosis.txt"
+        np.savetxt(fileNameOut, np.vstack((tau, Q_t_time_avg, chi_4, kurtosis)).T, fmt="%f")
+
+
+        h_p_array[i] = np.amax(chi_4)
+        u_0_array[i] = u_0
 
         plt.figure(0)
         #plt.plot(tau, Q_t_time_avg, label=r"$\delta =$ {}".format(delta))
-        plt.semilogx(tau, Q_t_time_avg, label=r"$\delta =$ {}".format(delta))
+        plt.semilogx(tau, Q_t_time_avg, label=r"$u_0 =$ {}".format(u_0))
         plt.figure(1)
-        plt.semilogx(tau, chi_4, label=r"$\delta =$ {}".format(delta))
+        plt.semilogx(tau, chi_4, label=r"$u_0 =$ {}".format(u_0))
         plt.figure(2)
-        plt.loglog(tau, chi_4, label=r"$\delta =$ {}".format(delta))
+        plt.loglog(tau, chi_4, label=r"$u_0 =$ {}".format(u_0))
+        plt.figure(3)
+        plt.semilogx(tau, kurtosis, label=r"$u_0 =$ {}".format(u_0))
         #plt.figure(3)
         #plt.semilogx(tau, strechedExponential(tau, tau_guess, beta_guess, c_guess))
+
+
+    stop_t = datetime.now()
+    print(stop_t-start_t)
 
 
 
@@ -277,13 +138,119 @@ def calcFPSF(fileName):
     plt.xlabel(r"Time $\tau$")
     plt.ylabel(r"$\chi_4$")
     plt.legend()
-    plt.show()
-    '''
-    deltas = [0.5, 1, 3, 5, 8, 10]
-    for delta in deltas:
-        Q_t = np.mean(np.where(dr<delta,1,0), axis=1)
-
-        plt.plot(tau,Q_t, label=r"$\delta =$ {}".format(delta))
+    plt.figure(3)
+    plt.xlabel(r"Time $\tau$")
+    plt.ylabel(r"$\kappa$")
     plt.legend()
-    #plt.show()
-    '''
+
+    plt.figure()
+    plt.plot(u_0_array, h_p_array)
+    plt.xlabel(r"$h_{p}$")
+    plt.ylabel(r"$u_{0}$")
+
+    plt.show()
+
+
+def plotFPSFandKurtisis(fileNameBase):
+    n_files = 8
+    u_0_array = np.zeros(n_files)
+    fileName_array = []
+    h_p_array = np.zeros(n_files)
+    colourMap = colourSet(n_files)
+
+    for i in range(0, n_files):
+        fileName = fileNameBase + str(i)
+        fileNameSimPar = fileName + "SimulationParameters.txt"
+
+        R, L, H, h, r_a, n_particles, n_fixed_particles, u_0, D_r, n_steps, dt = fileReader.loadSimulationParameters(fileNameSimPar)
+
+        u_0_array[i] = u_0
+        fileName_array.append(fileName)
+
+
+
+    sorted_zip = sorted(zip(u_0_array, fileName_array))
+    u_0_sorted = np.zeros(n_files)
+    for i in range(len(sorted_zip)):
+        tau, Q_t_time_avg, chi_4, kurtosis = fileReader.loadFPSFandKurtosis(sorted_zip[i][1])
+        u_0_sorted[i] = sorted_zip[i][0]
+
+        h_p_array[i] = np.amax(chi_4)
+        plt.figure(0)
+        plt.semilogx(tau, Q_t_time_avg, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
+        plt.figure(1)
+        plt.semilogx(tau, chi_4, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
+        plt.figure(2)
+        plt.semilogx(tau, kurtosis, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
+
+
+
+
+    plt.figure(0)
+    plt.xlabel(r"Time $\tau$")
+    plt.ylabel(r"$Q_t$")
+    plt.legend()
+    plt.savefig(fileNameBase+"_Q_t.png", dpi=200)
+
+    plt.figure(1)
+    plt.xlabel(r"Time $\tau$")
+    plt.ylabel(r"$\chi_4$")
+    plt.legend()
+    plt.savefig(fileNameBase + "_chi_4.png", dpi=200)
+
+    plt.figure(2)
+    plt.xlabel(r"Time $\tau$")
+    plt.ylabel(r"$\kappa$")
+    plt.legend()
+    plt.savefig(fileNameBase + "_kappa.png", dpi=200)
+
+    plt.figure()
+    plt.scatter(u_0_sorted, h_p_array)
+    plt.plot(u_0_sorted, h_p_array)
+    plt.xlabel(r"$u_{0}$")
+    plt.ylabel(r"$h_{p}$")
+    plt.savefig(fileNameBase+"_h_p.png", dpi=200)
+
+
+    plt.show()
+
+
+def plotOrderParameterParallell(fileNameBase, n_files):
+    u_0_array = np.zeros(n_files)
+    fileName_array = []
+    colourMap = colourSet(n_files)
+    start_file = 0
+
+    for i in range(0, n_files):
+        fileName = fileNameBase + str(i+start_file)
+        fileNameSimPar = fileName + "SimulationParameters.txt"
+
+        R, L, H, h, r_a, n_particles, n_fixed_particles, u_0, D_r, n_steps, dt = fileReader.loadSimulationParameters(fileNameSimPar)
+
+        u_0_array[i] = u_0
+        fileName_array.append(fileName)
+
+    start = 0#int(20000 / 20)
+    sorted_zip = sorted(zip(u_0_array, fileName_array))
+    u_0_sorted = np.zeros(n_files)
+    for i in range(len(sorted_zip)):
+        u_0_sorted[i] = sorted_zip[i][0]
+        fileName = sorted_zip[i][1]
+        time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps = fileReader.loadFileHDF5(fileName)
+        time = time[start:n_written_steps]-time[start]
+        vx = vx[start:n_written_steps, :]
+        vy = vy[start:n_written_steps, :]
+        v = np.sqrt(vx**2+vy**2)
+        Pi_x = vx/v
+        Pi_y = vy/v
+
+        Pi_x_avg = np.mean(Pi_x, axis=1)
+        Pi_y_avg = np.mean(Pi_y, axis=1)
+
+        Pi_parallel = np.average(Pi_x*Pi_x_avg[:, None]+Pi_y*Pi_y_avg[:, None], axis=1)
+
+        plt.plot(time, Pi_parallel, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
+
+
+    plt.legend()
+    plt.show()
