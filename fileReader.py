@@ -1,5 +1,6 @@
 import numpy as np
 import h5py
+import os
 
 
 def loadFile(fileName):
@@ -120,11 +121,34 @@ def loadFileHDF5(fileNameBase):
     vx = np.reshape(dataset[:,5], (n_written_steps, n_particles))
     vy = np.reshape(dataset[:,6], (n_written_steps, n_particles))
 
-    return time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps
+    return time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps, L, H
 
 
 def loadFPSFandKurtosis(fileNameBase):
     fileName = fileNameBase + "FpsfAndKurtosis.txt"
     tau, Q_t_time_avg, chi_4, kurtosis = np.loadtxt(fileName, unpack=True)
     return tau, Q_t_time_avg, chi_4, kurtosis
+
+def loadHistogram(fileNameBase):
+    fileName = fileNameBase + "Histogram.txt"
+    n, bins = np.loadtxt(fileName, unpack=True)
+    return n, bins
+
+def renameFiles(folderName, fileNameOld, fileNameNew):
+    exists = True
+    i=1
+    extentions = [".h5", "FinalState.txt", "SimulationParameters.txt"] #"FpsfAndKurtosis.txt",
+    while exists:
+        for extention in extentions:
+            filePath = folderName + fileNameOld + str(i) + extention
+            filePathNew = folderName + fileNameNew + str(i-1) + extention
+            print(filePath)
+            if (os.path.isfile(filePath)):
+                os.renames(filePath, filePathNew)
+            else:
+                exists = False
+        i+=1
+
+#fileNameBase = "/media/edvardst/My Book/NTNU/Programming/Master_Thesis/Periodic_2D/phaseDiagram/gamma_pp_0_0/highDensity/"
+#renameFiles(fileNameBase, "sweepPropulsion", "sweepPropulsion")
 

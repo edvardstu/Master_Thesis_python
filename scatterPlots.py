@@ -215,6 +215,7 @@ def run_animation(x, y, theta, vx, vy, L, H, h, R, n_steps, n_particles, n_frame
     x_0 = x[0]
     y_0 = y[0]
     c = np.arctan2(y[1] - y[0], x[1] - x[0])
+    #c = np.log(np.sqrt(vxy[0, :, 1] ** 2 + vxy[0, :, 0] ** 2))
 
     fig = plt.figure(facecolor='white', figsize=(7, 5))
     ax = fig.add_subplot(111, aspect='equal')
@@ -227,7 +228,8 @@ def run_animation(x, y, theta, vx, vy, L, H, h, R, n_steps, n_particles, n_frame
     plotLimits(barrier, L, H, R)
 
     # scat = ax.scatter(x, y, s=0, alpha=0.5, clip_on=False)
-    scat = ax.scatter(x_0, y_0, c=c, cmap='hsv')
+    #scat = ax.scatter(x_0, y_0, c=c, cmap='hsv')
+    scat = ax.scatter(x_0, y_0, c=c, cmap='jet')
 
     rpix = 6  # 12#25
     # Calculate and update size in points:
@@ -242,13 +244,17 @@ def run_animation(x, y, theta, vx, vy, L, H, h, R, n_steps, n_particles, n_frame
     # cbar.set_clim(-2*np.pi, 2*np.pi)
     ani = animation.FuncAnimation(fig, update_plot, frames=numframes,
                                   fargs=(xy, vxy, scat, arrow))
-    #ani.save('testAB.gif', writer='imagemagick', fps=5)
+    #Writer = animation.writers['ffmpeg']
+    #writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+    #ani.save('test.mp4', writer=writer)
+    #ani.save('test.gif', writer='imagemagick', fps=5)
     plt.show()
 
 
 def update_plot(i, data, vxy, scat, arrow):
     #cm = np.arctan2(data[i, :, 1] - data[i - 1, :, 1], data[i, :, 0] - data[i - 1, :, 0])
     cm = np.arctan2(vxy[i, :, 1], vxy[i, :, 0])
+    #cm = np.log(np.sqrt(vxy[i, :, 1]**2 + vxy[i, :, 0]**2))
     scat.set_offsets(data[i])
     scat.set_array(cm)
     #U = np.cos(cm)

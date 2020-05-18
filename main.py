@@ -16,23 +16,40 @@ def main():
 
 
     #fileNameBase = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_0_0/testHDF5"
-    fileNameBase = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_0_1/sweepPropulsion"
-    derivedPlots.calcFPSFandKurtisis(fileNameBase)
-    derivedPlots.plotFPSFandKurtisis(fileNameBase)
-    #derivedPlots.plotOrderParameterParallell(fileNameBase, 7)
+    #fileNameBase = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_0_0/00/sweepPropulsion"
+    #fileNameBase = "/media/edvardst/My Book/NTNU/Programming/Master_Thesis/Periodic_2D/phaseDiagram/gamma_pp_0_0/highDensity/sweepPropulsion"
+    fileNameBase = "/media/edvardst/My Book/NTNU/Programming/Master_Thesis/Periodic_2D/phaseDiagram/gamma_pp_0_0/test/sweepPropulsion"
+
+    #derivedPlots.calcFPSFandKurtisis(fileNameBase, 1, 0)
+
+    #derivedPlots.plotFPSFandKurtisis(fileNameBase, 8)
+
+    #derivedPlots.plotOrderParameterParallell(fileNameBase, 8)
 
 
+    #for i in range(12):
+    #    R, L, H, h, r_a, n_particles, n_fixed_particles, u_0, D_r, n_steps, dt = fileReader.loadSimulationParameters(fileNameBase + str(i) + "SimulationParameters.txt")
+    #    print("{} {}".format(i, u_0))
 
-    #fileName = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_1_0/test3"
-    #time, x, y, theta, vx, vy, n_particles, n_steps, D_r, deformation = fileReader.loadFileNew(fileName)
-    #time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps = fileReader.loadFileHDF5(fileName)
-    #n_frames = 200
+    #folderName = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_0_0/"
+    #fileName = "sweepPropulsion"
+    #derivedPlots.plotFPSFandKurtisisSeveral(folderName, fileName, 12)
+
+    n_frames = 100#20000
+
+    derivedPlots.findFileName(fileNameBase, 0.4)
+    fileName = "/media/edvardst/My Book/NTNU/Programming/Master_Thesis/Periodic_2D/phaseDiagram/gamma_pp_0_0/test/sweepPropulsion0"
+
+    derivedPlots.plotAvgEnergy(fileName)
+    derivedPlots.plotHistogram(fileName)
+
+    plt.show()
     #checkPosition(x, y, R, L, H, h, barrier)
-
-    #derivedPlots.plotAvgV(time, vx, vy)
-    #plt.show()
-
     #scatterPlots.run_animation(x, y, theta, vx, vy, L ,H ,h, R, n_written_steps, n_particles, n_frames, barrier)
+
+
+
+
 
     #scatterPlots.plotState(x, y, vx, vy, 0)
     #plt.show()
@@ -64,15 +81,16 @@ def main():
 
 
 def checkPosition(x, y, R, L, H, h, barrier):
-    factor = 1.1
+    factor = 1.0
     if barrier == scatterPlots.Barrier.Periodic:
-        x_tf = np.abs(x) > factor * L
-        y_tf = np.abs(y) > factor * H
+        x_tf = np.abs(x) > factor * L/2
+        y_tf = np.abs(y) > factor * H/2
     elif barrier == scatterPlots.Barrier.PeriodicTube:
-        x_tf = np.abs(x) > factor * L
-        y_tf = np.abs(y) > factor * H
+        x_tf = np.abs(x) > factor * L/2
+        y_tf = np.abs(y) > factor * H/2
     elif barrier == scatterPlots.Barrier.PeriodicFunnel:
-        x_tf = np.abs(x) > factor * L
+        x_tf = np.abs(x) > factor * L/2
+        #Not right I think
         y_tf = np.abs(y) > ((np.abs(x)*(H-h)/L) + h/2)
     elif barrier == scatterPlots.Barrier.Circular:
         x_tf = np.sqrt(x**2 + y**2) > factor * R
