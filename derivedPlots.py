@@ -82,9 +82,61 @@ def plotHistogram(fileNameBase):
     plt.legend()
     plt.xlabel(r"Magnitude $M$")
     plt.ylabel(r"# Occurrences, $N_{m}$")
-    plt.savefig(fileNameBase+"_GR.png", dpi=200)
-    tikzplotlib.save(fileNameBase+"_GR.tex")
-    print(intercept, slope)
+    #plt.savefig(fileNameBase+"_GR.png", dpi=200)
+    #tikzplotlib.save(fileNameBase+"_GR.tex")
+    print(intercept, slope, std_err)
+
+
+def plotSeveralHistograms(fileNameBase, n_files):
+    u_0_array = np.zeros(n_files)
+    fileName_array = []
+
+    for i in range(0, n_files):
+        fileName = fileNameBase + str(i)
+        fileNameSimPar = fileName + "SimulationParameters.txt"
+
+        R, L, H, h, r_a, n_particles, n_fixed_particles, u_0, D_r, n_steps, dt = fileReader.loadSimulationParameters(fileNameSimPar)
+
+        u_0_array[i] = u_0
+        fileName_array.append(fileName)
+
+    sorted_zip = sorted(zip(u_0_array, fileName_array))
+    u_0_sorted = np.zeros(n_files)
+
+    rows = int(np.ceil(n_files/2))
+    fig, axs = plt.subplots(rows, 2)
+
+    for i in range(len(sorted_zip)):
+        u_0_sorted[i] = sorted_zip[i][0]
+        n, magnitude = fileReader.loadHistogram(sorted_zip[i][1])
+        u_0_sorted[i] = sorted_zip[i][0]
+
+        col = int(i%2)
+        row = int((i-col)/2)
+        axs[row, col].bar(magnitude, n, magnitude[1]-magnitude[0])
+        axs[row, col].set_title(r'$u_0=$%.1f' % u_0_sorted[i])
+
+        #9axs[row, col].yscale('log')
+        #plt.yscale('log')
+        #plt.xscale('log')
+
+
+        #if col == 0:
+        #    axs[row, col].set(ylabel=r"# Occurrences, $N_{m}$")
+        #if row == rows-1:
+        #    axs[row, col].set(xlabel=r"Magnitude $M$")
+
+        axs[row, col].set(yscale = "log")
+
+    #for ax in axs.flat:
+        #ax.set(xlabel=r"Magnitude $M$", ylabel=r"# Occurrences, $N_{m}$", yscale='log')
+
+    # Hide x labels and tick labels for top plots and y ticks for right plots.
+    #for ax in axs.flat:
+        #ax.label_outer()
+
+    plt.savefig(fileNameBase+"_Histograms.png", dpi=200)
+    tikzplotlib.save(fileNameBase+"_Histograms.tex")
 
 
 
@@ -249,6 +301,43 @@ def plotFPSFandKurtisis(fileNameBase, n_files):
     tikzplotlib.save(fileNameBase + "_kappa_ex.tex")
 
     #plt.rcParams.update({'font.size': 30})
+    plt.show()
+
+def plotFPSPwithRegression(fileNameBase, u_0_ref, n_files):
+    for i in range(0, n_files):
+        fileName = fileNameBase + str(i)
+        fileNameSimPar = fileName + "SimulationParameters.txt"
+
+        R, L, H, h, r_a, n_particles, n_fixed_particles, u_0, D_r, n_steps, dt = fileReader.loadSimulationParameters(fileNameSimPar)
+        if(u_0_ref==u_0):
+            print(fileName)
+            break
+
+    tau, Q_t_time_avg, chi_4, kurtosis = fileReader.loadFPSFandKurtosis(fileName)
+    plt.figure(0)
+    plt.plot(tau, chi_4,label="Data points")
+    start = 14
+    stop =147
+    tau = tau[start:stop]
+    chi_4 = chi_4[start:stop]
+    plt.scatter(tau, chi_4, marker="+")
+    log_tau = np.log10(tau)
+    log_chi_4 = np.log10(chi_4)
+
+    plt.figure(1)
+    plt.plot(log_tau, log_chi_4, label="Data points")
+    slope, intercept, r_value, p_value, std_err = stats.linregress(log_tau, log_chi_4)
+    log_reg = intercept+slope*log_tau
+    label_reg = r"$a=$%.2f, $b=$%.2f" % (intercept, slope)
+    plt.plot(log_tau, log_reg, label=label_reg)
+    plt.legend()
+
+    plt.figure(0)
+    plt.plot(tau, 10**log_reg, label=label_reg)
+    plt.xscale("log")
+    plt.yscale("log")
+
+    plt.legend()
     plt.show()
 
 def plotFPSFandKurtisisSeveral(folderName, fileName, n_files):
@@ -429,7 +518,7 @@ def plotOrderParameterParallell(fileNameBase, n_files):
     plt.xlabel(r"$u_{0}$")
     plt.ylabel(r"$\langle \Pi_{||}(u_{0}) \rangle_{t}$")
     plt.savefig(fileNameBase+"_Pi_par_avg.png", dpi=200)
-
+    tikzplotlib.save(fileNameBase + "_Pi_par_avg.tex")
     plt.show()
 
 
@@ -441,6 +530,7 @@ def findFileName(fileNameBase, u_0_find):
         print(fileName)
         if (os.path.isfile(fileName)):
             R, L, H, h, r_a, n_particles, n_fixed_particles, u_0, D_r, n_steps, dt = fileReader.loadSimulationParameters(fileName)
+            print(r"The file number for u_0={} is {}".format(u_0, i))
             if u_0_find == u_0:
                 print(r"The file number for u_0={} is {}".format(u_0_find, i))
                 return fileName

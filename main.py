@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import fileReader
 import scatterPlots
 import derivedPlots
+import tikzplotlib
 
 
 
@@ -27,26 +28,30 @@ def main():
     #derivedPlots.plotOrderParameterParallell(fileNameBase, 8)
 
 
-    #for i in range(12):
-    #    R, L, H, h, r_a, n_particles, n_fixed_particles, u_0, D_r, n_steps, dt = fileReader.loadSimulationParameters(fileNameBase + str(i) + "SimulationParameters.txt")
-    #    print("{} {}".format(i, u_0))
+
 
     #folderName = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_0_0/"
     #fileName = "sweepPropulsion"
     #derivedPlots.plotFPSFandKurtisisSeveral(folderName, fileName, 12)
 
-    n_frames = 100#20000
+    #n_frames = 200#20000
 
-    derivedPlots.findFileName(fileNameBase, 0.4)
-    fileName = "/media/edvardst/My Book/NTNU/Programming/Master_Thesis/Periodic_2D/phaseDiagram/gamma_pp_0_0/test/sweepPropulsion0"
+    derivedPlots.findFileName(fileNameBase, 0.5)
+    fileName = "/media/edvardst/My Book/NTNU/Programming/Master_Thesis/Periodic_2D/phaseDiagram/gamma_pp_0_0/test/sweepPropulsion3"
 
-    derivedPlots.plotAvgEnergy(fileName)
-    derivedPlots.plotHistogram(fileName)
+    #derivedPlots.plotAvgEnergy(fileName)
+    #derivedPlots.plotHistogram(fileName)
 
-    plt.show()
+    #derivedPlots.plotSeveralHistograms(fileNameBase, 8)
+
+    #scatterPlots.plotIntermittency(fileName, 6000, 0, 1)
+
+    scatterPlots.plotStateAndSaveFile(fileName, 6000)
+    # plt.show()
     #checkPosition(x, y, R, L, H, h, barrier)
     #scatterPlots.run_animation(x, y, theta, vx, vy, L ,H ,h, R, n_written_steps, n_particles, n_frames, barrier)
 
+    #derivedPlots.plotFPSPwithRegression(fileNameBase, 0.1, 8)
 
 
 

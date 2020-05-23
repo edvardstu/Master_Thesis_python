@@ -2,6 +2,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 import enum
+import tikzplotlib
+import fileReader
 
 class Barrier(enum.Enum):
     Circular = 1
@@ -67,15 +69,80 @@ def plotState(x, y, vx, vy, i):
     x_0 = x[i]
     y_0 = y[i]
     c = np.arctan2(vy[i], vx[i])
+    x_0 = np.append(x_0, [100, 100])
+    y_0 = np.append(y_0, [100, 100])
+    c = np.append(c, [-np.pi, np.pi])
+    #c = np.log(vx[i]**2+vy[i]**2)
     scat = plt.scatter(x_0, y_0, c=c, cmap='hsv')
     plt.quiver(x_0, y_0, np.cos(c), np.sin(c))
 
     plt.xlabel(r'$x$')
     plt.ylabel(r'$y$')
 
-    cbar = plt.colorbar(scat)
+    L=25
+    H=25
+    plt.xlim(-L / 2 - L / 20, L / 2 + L / 20)
+    plt.ylim(-H / 2 - H / 20, H / 2 + H / 20)
+
+
+    cbar = plt.colorbar(scat)#, ticks=[-3, -2, -1, 0, 1, 2, 3])
     cbar.ax.set_ylabel(r'$\theta$')
-    cbar.set_clim(-2*np.pi, 2*np.pi)
+    #cbar.set_clim(-np.pi, np.pi)
+    #plt.clim(-np.pi, np.pi)
+
+
+def plotStateAndSaveFile(fileName, frame):
+    time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps, L, H = fileReader.loadFileHDF5(fileName)
+    plt.figure()
+    x_0 = x[frame]
+    y_0 = y[frame]
+    c = np.arctan2(vy[frame], vx[frame])
+    #x_0 = np.append(x_0, [100, 100])
+    #y_0 = np.append(y_0, [100, 100])
+    #c = np.append(c, [-np.pi, np.pi])
+
+    scat = plt.scatter(x_0, y_0, c=c, cmap='hsv')
+    v=np.cos(c)
+    u=np.sin(c)
+    plt.quiver(x_0, y_0, v, u)
+
+    plt.xlabel(r'$x$')
+    plt.ylabel(r'$y$')
+
+    plt.xlim(-L / 2 - L / 20, L / 2 + L / 20)
+    plt.ylim(-H / 2 - H / 20, H / 2 + H / 20)
+
+    cbar = plt.colorbar(scat)  # , ticks=[-3, -2, -1, 0, 1, 2, 3])
+    cbar.ax.set_ylabel(r'$\theta$')
+    plt.clim(-np.pi, np.pi)
+    plt.savefig(fileName + "_state_" + str(frame) + ".png", dpi=200)
+    fileNameOut = fileName + "_state_" + str(frame) + ".txt"
+    np.savetxt(fileNameOut, np.vstack((x_0, y_0, c, v, u)).T, fmt="%f")
+
+
+def plotIntermittency(fileName, frame, extra, steps):
+    time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps, L, H = fileReader.loadFileHDF5(fileName)
+
+    for i in range(frame-extra*steps, frame+extra*steps+1,steps):
+        plt.figure()
+        plt.title("Time = %.2f" % time[i])
+        x_0 = x[i]
+        y_0 = y[i]
+        c = np.log10((vx[i]**2+vy[i]**2)/u_0**2)
+        scat = plt.scatter(x_0, y_0, c=c, cmap='plasma')
+        #plt.quiver(x_0, y_0, np.cos(c), np.sin(c))
+
+        plt.xlabel(r'$x$')
+        plt.ylabel(r'$y$')
+
+        plt.clim(-4, 0)
+        cbar = plt.colorbar(scat)
+        cbar.ax.set_ylabel(r'$E_i/E_0$')
+        barrier = Barrier.Periodic
+        plotBoundary(barrier, L, H, 0, 0)
+        plt.savefig(fileName + "_intermittency_" + str(i) + ".png", dpi=200)
+        tikzplotlib.save(fileName + "_intermittency_" + str(i) + ".tex")
+
 
 
 def plotVelocityMap(x, y, vx, vy, i, R):
@@ -229,7 +296,7 @@ def run_animation(x, y, theta, vx, vy, L, H, h, R, n_steps, n_particles, n_frame
 
     # scat = ax.scatter(x, y, s=0, alpha=0.5, clip_on=False)
     #scat = ax.scatter(x_0, y_0, c=c, cmap='hsv')
-    scat = ax.scatter(x_0, y_0, c=c, cmap='jet')
+    scat = ax.scatter(x_0, y_0, c=c, cmap='hsv')
 
     rpix = 6  # 12#25
     # Calculate and update size in points:
