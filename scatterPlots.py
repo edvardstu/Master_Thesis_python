@@ -102,8 +102,10 @@ def plotStateAndSaveFile(fileName, frame):
     #c = np.append(c, [-np.pi, np.pi])
 
     scat = plt.scatter(x_0, y_0, c=c, cmap='hsv')
-    v=np.cos(c)
-    u=np.sin(c)
+    #v=np.cos(c)
+    #u=np.sin(c)
+    v= np.abs(vx[frame])/u_0
+    u= np.abs(vy[frame])/u_0
     plt.quiver(x_0, y_0, v, u)
 
     plt.xlabel(r'$x$')
@@ -143,7 +145,27 @@ def plotIntermittency(fileName, frame, extra, steps):
         plt.savefig(fileName + "_intermittency_" + str(i) + ".png", dpi=200)
         tikzplotlib.save(fileName + "_intermittency_" + str(i) + ".tex")
 
+def plotPiNematic(fileName, frame):
+    time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps, L, H = fileReader.loadFileHDF5(fileName)
 
+    plt.figure()
+    plt.title("Time = %.2f" % time[frame])
+    x_0 = x[frame]
+    y_0 = y[frame]
+    theta_0 = theta[frame]
+    u = np.cos(theta_0)
+    v = np.sin(theta_0)
+    scat = plt.scatter(x_0, y_0, c="darkturquoise")
+    plt.quiver(x_0, y_0, u, v)
+
+    plt.xlabel(r'$x$')
+    plt.ylabel(r'$y$')
+    barrier = Barrier.Periodic
+    plotBoundary(barrier, L, H, 0, 0)
+    plt.savefig(fileName + "_Pi_nem_" + str(frame) + ".png", dpi=200)
+    tikzplotlib.save(fileName + "_Pi_nem_" + str(frame) + ".tex")
+    fileNameOut = fileName + "_Pi_nem_" + str(frame) + ".txt"
+    np.savetxt(fileNameOut, np.vstack((x_0, y_0, u, v)).T, fmt="%f")
 
 def plotVelocityMap(x, y, vx, vy, i, R):
     plt.figure()
@@ -274,13 +296,15 @@ def run_animation(x, y, theta, vx, vy, L, H, h, R, n_steps, n_particles, n_frame
         offset = int(n_steps / n_frames)
         xy[i] = np.stack((x[i * offset].T, y[i * offset].T)).T
         theta_animation[i] = theta[i * offset]
-        vxy[i] = np.stack((vx[i * offset].T, vy[i * offset].T)).T
+        #vxy[i] = np.stack((vx[i * offset].T, vy[i * offset].T)).T
+        vxy[i] = np.stack((np.cos(theta[i * offset].T), np.sin(theta[i * offset].T))).T
 
     numframes = n_frames
     numpoints = n_particles
 
     x_0 = x[0]
     y_0 = y[0]
+    #c = np.zeros(1000)
     c = np.arctan2(y[1] - y[0], x[1] - x[0])
     #c = np.log(np.sqrt(vxy[0, :, 1] ** 2 + vxy[0, :, 0] ** 2))
 
@@ -298,7 +322,8 @@ def run_animation(x, y, theta, vx, vy, L, H, h, R, n_steps, n_particles, n_frame
     #scat = ax.scatter(x_0, y_0, c=c, cmap='hsv')
     scat = ax.scatter(x_0, y_0, c=c, cmap='hsv')
 
-    rpix = 6  # 12#25
+    #rpix = 6  # 12#25
+    rpix = 3
     # Calculate and update size in points:
     size_pt = (2 * rpix / fig.dpi * 72) ** 2
     sizes_pt = np.full(n_particles, size_pt)
@@ -320,14 +345,18 @@ def run_animation(x, y, theta, vx, vy, L, H, h, R, n_steps, n_particles, n_frame
 
 def update_plot(i, data, vxy, scat, arrow):
     #cm = np.arctan2(data[i, :, 1] - data[i - 1, :, 1], data[i, :, 0] - data[i - 1, :, 0])
-    cm = np.arctan2(vxy[i, :, 1], vxy[i, :, 0])
-    #cm = np.log(np.sqrt(vxy[i, :, 1]**2 + vxy[i, :, 0]**2))
+    cm = np.zeros(len(vxy[i, :, 1]))
+    #cm = np.arctan2(vxy[i, :, 1], vxy[i, :, 0])
+
     scat.set_offsets(data[i])
     scat.set_array(cm)
-    #U = np.cos(cm)
-    #V = np.sin(cm)
-    #arrow.set_UVC(U, V)
-    arrow.set_UVC(vxy[i, :, 0]*2, vxy[i, :, 1]*2)
+    cm = np.arctan2(vxy[i, :, 1], vxy[i, :, 0])
+    U = np.cos(cm)
+    V = np.sin(cm)
+    arrow.set_UVC(U, V)
+    #scale = 1
+
+    #arrow.set_UVC(scale*vxy[i, :, 0], scale*vxy[i, :, 1])
     arrow.set_offsets(data[i])
 
     return scat

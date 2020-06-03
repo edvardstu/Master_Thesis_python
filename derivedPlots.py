@@ -82,8 +82,8 @@ def plotHistogram(fileNameBase):
     plt.legend()
     plt.xlabel(r"Magnitude $M$")
     plt.ylabel(r"# Occurrences, $N_{m}$")
-    #plt.savefig(fileNameBase+"_GR.png", dpi=200)
-    #tikzplotlib.save(fileNameBase+"_GR.tex")
+    plt.savefig(fileNameBase+"_GR.png", dpi=200)
+    tikzplotlib.save(fileNameBase+"_GR.tex")
     print(intercept, slope, std_err)
 
 
@@ -250,7 +250,8 @@ def plotFPSFandKurtisis(fileNameBase, n_files):
         plt.figure(0)
         plt.semilogx(tau, Q_t_time_avg, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
         plt.figure(1)
-        plt.semilogx(tau, chi_4, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
+        #plt.semilogx(tau, chi_4, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
+        plt.loglog(tau*u_0_sorted[i], chi_4, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
         plt.figure(2)
         plt.loglog(tau, kurtosis, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
         #plt.scatter(tau, kurtosis, label=r"$u_0 =$ {}".format(u_0_sorted[i]), color=colourMap[i])
@@ -316,8 +317,8 @@ def plotFPSPwithRegression(fileNameBase, u_0_ref, n_files):
     tau, Q_t_time_avg, chi_4, kurtosis = fileReader.loadFPSFandKurtosis(fileName)
     plt.figure(0)
     plt.plot(tau, chi_4,label="Data points")
-    start = 14
-    stop =147
+    start =0#14
+    stop =8#147
     tau = tau[start:stop]
     chi_4 = chi_4[start:stop]
     plt.scatter(tau, chi_4, marker="+")
@@ -331,13 +332,15 @@ def plotFPSPwithRegression(fileNameBase, u_0_ref, n_files):
     label_reg = r"$a=$%.2f, $b=$%.2f" % (intercept, slope)
     plt.plot(log_tau, log_reg, label=label_reg)
     plt.legend()
+    plt.savefig(fileName + "_chi_4_regression.png", dpi=200)
 
     plt.figure(0)
     plt.plot(tau, 10**log_reg, label=label_reg)
     plt.xscale("log")
     plt.yscale("log")
-
     plt.legend()
+    plt.savefig(fileName + "_chi_4_regression_2.png", dpi=200)
+
     plt.show()
 
 def plotFPSFandKurtisisSeveral(folderName, fileName, n_files):
@@ -441,8 +444,50 @@ def plotFPSFandKurtisisSeveral(folderName, fileName, n_files):
 
     plt.show()
 
+def plotOrderParemeterParallell(fileName):
+    time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps, L, H = fileReader.loadFileHDF5(
+        fileName)
+    del x
+    del y
+    del theta
+    #del time
+    print(fileName)
+    # time = time[start:n_written_steps]#-time[start]
+    #vx = vx[start:n_written_steps, :]
+    #vy = vy[start:n_written_steps, :]
+    v = np.sqrt(vx ** 2 + vy ** 2)
 
-def plotOrderParameterParallell(fileNameBase, n_files):
+    Pi_x = vx / v
+    Pi_y = vy / v
+    del vx
+    del vy
+    del v
+
+    Pi_x_avg = np.mean(Pi_x, axis=1)
+    Pi_y_avg = np.mean(Pi_y, axis=1)
+
+    Pi_parallel = np.mean(np.abs(Pi_x * Pi_x_avg[:, None] + Pi_y * Pi_y_avg[:, None]), axis=1)
+    del Pi_x
+    del Pi_y
+    del Pi_x_avg
+    del Pi_y_avg
+    where_are_NaNs = np.isnan(Pi_parallel)
+    Pi_parallel[where_are_NaNs] = 0.0
+    del where_are_NaNs
+
+    n_in_mean = 40
+    Pi_parallel = np.mean(Pi_parallel[0:-1].reshape(-1, n_in_mean), axis=1)
+    time = np.mean(time[0:-1].reshape(-1, n_in_mean), axis=1)
+
+    plt.figure()
+    plt.plot(time, Pi_parallel)
+    plt.xlabel(r"Time $t$")
+    plt.ylabel(r"Order parameter $\Pi_{||}(t)$")
+    plt.savefig(fileName + "_Pi_par_red.png", dpi=200)
+    tikzplotlib.save(fileName + "_Pi_par_red.tex")
+
+
+def plotOrderParameterParallellTimeAvg(fileNameBase, n_files):
     u_0_array = np.zeros(n_files)
     Pi_parallel_time_average = np.zeros(n_files)
     Pi_parallel_time_average_std = np.zeros(n_files)
@@ -460,7 +505,7 @@ def plotOrderParameterParallell(fileNameBase, n_files):
         u_0_array[i] = u_0
         fileName_array.append(fileName)
 
-    start = 10000#int(20000 / 20)
+    start = 16000#int(20000 / 20)
     sorted_zip = sorted(zip(u_0_array, fileName_array))
     u_0_sorted = np.zeros(n_files)
     for i in range(len(sorted_zip)):
@@ -521,6 +566,107 @@ def plotOrderParameterParallell(fileNameBase, n_files):
     tikzplotlib.save(fileNameBase + "_Pi_par_avg.tex")
     plt.show()
 
+def plotOrderParemeterNematic(fileName):
+    time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps, L, H = fileReader.loadFileHDF5(
+        fileName)
+    del x
+    del y
+    del vx
+    del vy
+    #del time
+    print(fileName)
+
+    theta_temp = theta%np.pi
+    theta_temp = np.where(theta_temp<0,theta_temp+np.pi, theta_temp)
+    #theta_temp = np.where(theta_temp>np.pi/2, np.pi-theta_temp, theta_temp)
+    theta_avg_2 = np.mean(theta_temp, axis=1)
+    theta_temp = theta % np.pi
+    theta_temp = np.where(theta_temp > np.pi / 2, theta_temp-np.pi, theta_temp)
+    theta_temp = np.where(theta_temp < np.pi / 2, theta_temp + np.pi, theta_temp)
+    theta_avg = np.mean(theta_temp, axis=1)
+    plt.figure()
+    plt.plot(time, theta_avg)
+    plt.plot(time, theta_avg_2)
+    #plt.figure()
+
+
+    Pi_nematic = 2*np.mean(np.cos(theta-theta_avg[:, None])**2, axis=1)-1
+
+    del theta_avg
+
+    n_in_mean = 40
+    Pi_nematic = np.mean(Pi_nematic[0:-1].reshape(-1, n_in_mean), axis=1)
+    time = np.mean(time[0:-1].reshape(-1, n_in_mean), axis=1)
+
+    plt.figure()
+    plt.plot(time, Pi_nematic)
+    plt.xlabel(r"Time $t$")
+    plt.ylabel(r"Order parameter $\Pi_{||}(t)$")
+    plt.savefig(fileName + "_Pi_nem.png", dpi=200)
+    tikzplotlib.save(fileName + "_Pi_nem.tex")
+
+
+def plotOrderParameterNematicTimeAvg(fileNameBase, n_files):
+    u_0_array = np.zeros(n_files)
+    Pi_parallel_time_average = np.zeros(n_files)
+    Pi_parallel_time_average_std = np.zeros(n_files)
+    fileName_array = []
+    start_file = 0
+
+    for i in range(0, n_files):
+        fileName = fileNameBase + str(i+start_file)
+
+        fileNameSimPar = fileName + "SimulationParameters.txt"
+
+        R, L, H, h, r_a, n_particles, n_fixed_particles, u_0, D_r, n_steps, dt = fileReader.loadSimulationParameters(fileNameSimPar)
+
+        u_0_array[i] = u_0
+        fileName_array.append(fileName)
+
+    start = 16000#int(20000 / 20)
+    sorted_zip = sorted(zip(u_0_array, fileName_array))
+    u_0_sorted = np.zeros(n_files)
+    for i in range(len(sorted_zip)):
+        u_0_sorted[i] = sorted_zip[i][0]
+        fileName = sorted_zip[i][1]
+        time, x, y, theta, vx, vy, n_particles, n_steps, D_r, u_0, dt, write_interval, n_written_steps, L, H = fileReader.loadFileHDF5(fileName)
+        theta = theta[start:n_written_steps, :]
+        del x
+        del y
+        del vx
+        del vy
+        del time
+        print(fileName)
+
+        theta_temp = theta % np.pi
+        theta_temp = np.where(theta_temp > np.pi / 2, theta_temp - np.pi, theta_temp)
+        theta_temp = np.where(theta_temp < np.pi / 2, theta_temp + np.pi, theta_temp)
+        theta_avg = np.mean(theta_temp, axis=1)
+
+        Pi_nematic = 2 * np.mean(np.cos(theta - theta_avg[:, None]) ** 2, axis=1) - 1
+
+        Pi_parallel_time_average[i] = np.mean(Pi_nematic)
+        Pi_parallel_time_average_std[i] = np.std(Pi_nematic, ddof=1)
+
+    #plt.xlabel(r"$t$")
+    #plt.ylabel(r"$\Pi_{||}(t)$")
+    #plt.savefig(fileNameBase+"_Pi_par.png", dpi=200)
+    #plt.legend()
+
+    print(u_0_sorted)
+    print(Pi_parallel_time_average)
+    print(Pi_parallel_time_average_std)
+
+    fileNameOut = fileNameBase + "OrderParameter.txt"
+    np.savetxt(fileNameOut, np.vstack((u_0_sorted, Pi_parallel_time_average, Pi_parallel_time_average_std)).T, fmt="%f")
+
+    plt.figure()
+    plt.errorbar(u_0_sorted, Pi_parallel_time_average, yerr=Pi_parallel_time_average_std, capsize=5)
+    plt.xlabel(r"$u_{0}$")
+    plt.ylabel(r"$\langle \Pi_{||}(u_{0}) \rangle_{t}$")
+    plt.savefig(fileNameBase+"_Pi_nematic_avg.png", dpi=200)
+    tikzplotlib.save(fileNameBase + "_Pi_nematic_avg.tex")
+    plt.show()
 
 def findFileName(fileNameBase, u_0_find):
     exists = True
