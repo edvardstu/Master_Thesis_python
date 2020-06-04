@@ -33,8 +33,8 @@ def main():
     #    derivedPlots.plotOrderParemeterNematic(fileName)
     #derivedPlots.plotOrderParameterNematicTimeAvg(fileNameBase, 8)
 
-    scatterPlots.plotPiNematic(fileName, 6427)
-    #plt.show()
+    scatterPlots.plotPiNematic(fileName, 100)
+    plt.show()
 
 
     #folderName = "/home/edvardst/Documents/NTNU/Programming/Master_Thesis/Master_Thesis_c/results/periodic_2D/phaseDiagram/gamma_pp_0_0/"

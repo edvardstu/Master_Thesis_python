@@ -582,7 +582,7 @@ def plotOrderParemeterNematic(fileName):
     theta_avg_2 = np.mean(theta_temp, axis=1)
     theta_temp = theta % np.pi
     theta_temp = np.where(theta_temp > np.pi / 2, theta_temp-np.pi, theta_temp)
-    theta_temp = np.where(theta_temp < np.pi / 2, theta_temp + np.pi, theta_temp)
+    theta_temp = np.where(theta_temp < -np.pi / 2, theta_temp + np.pi, theta_temp)
     theta_avg = np.mean(theta_temp, axis=1)
     plt.figure()
     plt.plot(time, theta_avg)

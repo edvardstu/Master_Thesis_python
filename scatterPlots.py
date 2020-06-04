@@ -155,17 +155,63 @@ def plotPiNematic(fileName, frame):
     theta_0 = theta[frame]
     u = np.cos(theta_0)
     v = np.sin(theta_0)
-    scat = plt.scatter(x_0, y_0, c="darkturquoise")
+
+    theta_0 = np.arctan2(v,u)
+    #theta_0 = np.where(theta_0 > np.pi / 2, theta_0-np.pi, theta_0)
+    #theta_0 = np.where(theta_0 < -np.pi / 2, theta_0 + np.pi, theta_0)
+
+    scat = plt.scatter(x_0, y_0, c=theta_0, cmap="hsv")
     plt.quiver(x_0, y_0, u, v)
+
+    #c = np.arctan2(vy[i], vx[i])
+    #x_0 = np.append(x_0, [100, 100])
+    #y_0 = np.append(y_0, [100, 100])
+    #c = np.append(c, [-np.pi, np.pi])
+    #c = np.log(vx[i]**2+vy[i]**2)
+    #scat = plt.scatter(x_0, y_0, c=c, cmap='hsv')
+
+    L = 25
+    H = 25
+    plt.xlim(-L / 2 - L / 20, L / 2 + L / 20)
+    plt.ylim(-H / 2 - H / 20, H / 2 + H / 20)
+
+    cbar = plt.colorbar(scat)  # , ticks=[-3, -2, -1, 0, 1, 2, 3])
+    cbar.ax.set_ylabel(r'$\theta$')
 
     plt.xlabel(r'$x$')
     plt.ylabel(r'$y$')
     barrier = Barrier.Periodic
     plotBoundary(barrier, L, H, 0, 0)
-    plt.savefig(fileName + "_Pi_nem_" + str(frame) + ".png", dpi=200)
-    tikzplotlib.save(fileName + "_Pi_nem_" + str(frame) + ".tex")
-    fileNameOut = fileName + "_Pi_nem_" + str(frame) + ".txt"
-    np.savetxt(fileNameOut, np.vstack((x_0, y_0, u, v)).T, fmt="%f")
+    plt.savefig(fileName + "_Pi_nem_new_" + str(frame) + ".png", dpi=200)
+    tikzplotlib.save(fileName + "_Pi_nem_new_" + str(frame) + ".tex")
+    fileNameOut = fileName + "_Pi_nem_new_" + str(frame) + ".txt"
+    np.savetxt(fileNameOut, np.vstack((x_0, y_0, theta_0, u, v)).T, fmt="%f")
+
+    size_l= 5
+    indecies = (abs(x_0)<=size_l) & (abs(y_0)<=size_l)
+
+    length = np.sum(indecies)
+    x_new = np.zeros(length)
+    y_new = np.zeros(length)
+    t_new = np.zeros(length)
+    u_new = np.zeros(length)
+    v_new = np.zeros(length)
+
+    j=0
+    print(length)
+    for i in range(1000):
+        if indecies[i]==1:
+            x_new[j] = x_0[i]
+            y_new[j] = y_0[i]
+            t_new[j] = theta_0[i]
+            u_new[j] = u[i]
+            v_new[j] = v[i]
+            j+=1
+
+    fileNameOut = fileName + "_Pi_nem_new_short_" + str(frame) + ".txt"
+    np.savetxt(fileNameOut, np.vstack((x_new, y_new, t_new, u_new, v_new)).T, fmt="%f")
+    plt.figure()
+    plt.scatter(x_new, y_new)
 
 def plotVelocityMap(x, y, vx, vy, i, R):
     plt.figure()
